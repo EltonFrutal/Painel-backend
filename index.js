@@ -9,12 +9,11 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
+// Rotas
 app.use('/auth', authRoutes);
 app.use('/vendas', vendasRoutes);
 
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
-
-const vendasRouter = require('./routes/vendas');
-app.use('/vendas', vendasRouter);
-
+app.listen(PORT, () => {
+  console.log(`Servidor rodando na porta ${PORT}`);
+});
