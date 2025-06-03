@@ -1,3 +1,7 @@
+const express = require('express');
+const router = express.Router();
+const pool = require('../db');
+
 // [GET] - Listar usuários, com filtro por organização
 router.get('/', async (req, res) => {
   const { id_organizacao } = req.query;
@@ -19,11 +23,11 @@ router.get('/', async (req, res) => {
 
 // [POST] - Adicionar novo usuário
 router.post('/', async (req, res) => {
-  const { nome, email, senha, numero_organizacao } = req.body;
+  const { nome, email, senha_hash, id_organizacao } = req.body;
   try {
     const result = await pool.query(
-      'INSERT INTO usuarios (nome, email, senha, numero_organizacao) VALUES ($1, $2, $3, $4) RETURNING *',
-      [nome, email, senha, numero_organizacao]
+      'INSERT INTO usuarios (nome, email, senha_hash, id_organizacao) VALUES ($1, $2, $3, $4) RETURNING *',
+      [nome, email, senha_hash, id_organizacao]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
@@ -35,11 +39,11 @@ router.post('/', async (req, res) => {
 // [PUT] - Editar usuário
 router.put('/:id', async (req, res) => {
   const { id } = req.params;
-  const { nome, email, senha, numero_organizacao } = req.body;
+  const { nome, email, senha_hash, id_organizacao } = req.body;
   try {
     const result = await pool.query(
-      'UPDATE usuarios SET nome = $1, email = $2, senha = $3, numero_organizacao = $4 WHERE id_usuario = $5 RETURNING *',
-      [nome, email, senha, numero_organizacao, id]
+      'UPDATE usuarios SET nome = $1, email = $2, senha_hash = $3, id_organizacao = $4 WHERE id_usuario = $5 RETURNING *',
+      [nome, email, senha_hash, id_organizacao, id]
     );
     if (result.rows.length === 0) {
       res.status(404).json({ erro: 'Usuário não encontrado.' });
