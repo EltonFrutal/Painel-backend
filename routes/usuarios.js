@@ -2,10 +2,29 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 
-// [GET] - Listar todos os usuários
+// [GET] - Listar usuários, com filtro por nome e organização
 router.get('/', async (req, res) => {
+  const { nome, numero_organizacao } = req.query;
   try {
-    const result = await pool.query('SELECT * FROM usuarios ORDER BY id_usuario');
+    let query = 'SELECT * FROM usuarios';
+    let params = [];
+    let where = [];
+
+    if (nome) {
+      params.push(nome);
+      where.push(`nome = $${params.length}`);
+    }
+    if (numero_organizacao) {
+      params.push(numero_organizacao);
+      where.push(`numero_organizacao = $${params.length}`);
+    }
+
+    if (where.length > 0) {
+      query += ' WHERE ' + where.join(' AND ');
+    }
+    query += ' ORDER BY id_usuario';
+
+    const result = await pool.query(query, params);
     res.json(result.rows);
   } catch (err) {
     console.error('[GET /api/usuarios] Erro:', err);
@@ -15,11 +34,11 @@ router.get('/', async (req, res) => {
 
 // [POST] - Adicionar novo usuário
 router.post('/', async (req, res) => {
-  const { nome, email, senha } = req.body;
+  const { nome, email, senha, numero_organizacao } = req.body;
   try {
     const result = await pool.query(
-      'INSERT INTO usuarios (nome, email, senha) VALUES ($1, $2, $3) RETURNING *',
-      [nome, email, senha]
+      'INSERT INTO usuarios (nome, email, senha, numero_organizacao) VALUES ($1, $2, $3, $4) RETURNING *',
+      [nome, email, senha, numero_organizacao]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
@@ -31,11 +50,11 @@ router.post('/', async (req, res) => {
 // [PUT] - Editar usuário
 router.put('/:id', async (req, res) => {
   const { id } = req.params;
-  const { nome, email, senha } = req.body;
+  const { nome, email, senha, numero_organizacao } = req.body;
   try {
     const result = await pool.query(
-      'UPDATE usuarios SET nome = $1, email = $2, senha = $3 WHERE id_usuario = $4 RETURNING *',
-      [nome, email, senha, id]
+      'UPDATE usuarios SET nome = $1, email = $2, senha = $3, numero_organizacao = $4 WHERE id_usuario = $5 RETURNING *',
+      [nome, email, senha, numero_organizacao, id]
     );
     if (result.rows.length === 0) {
       res.status(404).json({ erro: 'Usuário não encontrado.' });
