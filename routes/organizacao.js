@@ -2,8 +2,11 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 
+console.log('Arquivo organizacao.js foi carregado!');
+
 // TESTE - Ver se a rota responde
 router.get('/teste', (req, res) => {
+  console.log('Entrou na rota /api/organizacao/teste');
   res.send('Rota de teste OK');
 });
 
