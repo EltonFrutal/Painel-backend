@@ -13,6 +13,25 @@ router.get('/', async (req, res) => {
   }
 });
 
+// GET - Buscar uma organização por ID
+router.get('/:id_organizacao', async (req, res) => {
+  const { id_organizacao } = req.params;
+  try {
+    const result = await pool.query(
+      'SELECT * FROM organizacao WHERE id_organizacao = $1',
+      [id_organizacao]
+    );
+    if (result.rows.length === 0) {
+      res.status(404).json({ erro: 'Organização não encontrada.' });
+    } else {
+      res.json(result.rows[0]);
+    }
+  } catch (err) {
+    console.error('[GET /api/organizacao/:id_organizacao] Erro:', err);
+    res.status(500).json({ erro: 'Erro ao buscar organização', detalhes: err.message });
+  }
+});
+
 // POST - Adicionar nova organização
 router.post('/', async (req, res) => {
   const { id_organizacao, nome_organizacao } = req.body;
