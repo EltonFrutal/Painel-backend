@@ -1,29 +1,14 @@
-const express = require('express');
-const router = express.Router();
-const pool = require('../db');
-
-// [GET] - Listar usuários, com filtro por nome e organização
+// [GET] - Listar usuários, com filtro por organização
 router.get('/', async (req, res) => {
-  const { nome, numero_organizacao } = req.query;
+  const { id_organizacao } = req.query;
   try {
     let query = 'SELECT * FROM usuarios';
     let params = [];
-    let where = [];
-
-    if (nome) {
-      params.push(nome);
-      where.push(`nome = $${params.length}`);
-    }
-    if (numero_organizacao) {
-      params.push(numero_organizacao);
-      where.push(`numero_organizacao = $${params.length}`);
-    }
-
-    if (where.length > 0) {
-      query += ' WHERE ' + where.join(' AND ');
+    if (id_organizacao) {
+      query += ' WHERE id_organizacao = $1';
+      params.push(id_organizacao);
     }
     query += ' ORDER BY id_usuario';
-
     const result = await pool.query(query, params);
     res.json(result.rows);
   } catch (err) {
