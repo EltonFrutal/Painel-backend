@@ -2,6 +2,11 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 
+// TESTE - Ver se a rota responde
+router.get('/teste', (req, res) => {
+  res.send('Rota de teste OK');
+});
+
 // GET - Listar todas as organizações
 router.get('/', async (req, res) => {
   try {
