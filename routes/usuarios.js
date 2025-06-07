@@ -1,4 +1,5 @@
 const express = require('express');
+const bcrypt = require('bcrypt');
 const router = express.Router();
 const pool = require('../db');
 
@@ -72,6 +73,34 @@ router.delete('/:id', async (req, res) => {
   } catch (err) {
     console.error('[DELETE /api/usuarios/:id] Erro:', err);
     res.status(500).json({ erro: 'Erro ao remover usuário', detalhes: err.message });
+  }
+});
+
+// [POST] - Login do usuário
+router.post('/login', async (req, res) => {
+  const { nome, senha, id_organizacao } = req.body;
+
+  try {
+    const result = await pool.query(
+      'SELECT * FROM usuarios WHERE nome = $1 AND id_organizacao = $2',
+      [nome, id_organizacao]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ erro: 'Usuário não encontrado.' });
+    }
+
+    const usuario = result.rows[0];
+    const senhaValida = await bcrypt.compare(senha, usuario.senha_hash);
+    if (!senhaValida) {
+      return res.status(403).json({ erro: 'Senha incorreta.' });
+    }
+
+    delete usuario.senha_hash;
+    res.json(usuario);
+  } catch (err) {
+    console.error('[POST /api/usuarios/login] Erro:', err);
+    res.status(500).json({ erro: 'Erro ao realizar login', detalhes: err.message });
   }
 });
 

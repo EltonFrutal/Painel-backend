@@ -1,36 +1,34 @@
 const express = require('express');
-const bcrypt = require('bcrypt');
-const pool = require('../db');
 const router = express.Router();
+const pool = require('../db');
+const bcrypt = require('bcrypt');
 
-// Cadastro de usuário
-router.post('/register', async (req, res) => {
-  const { nome, email, senha, id_organizacao } = req.body;
-  const hash = await bcrypt.hash(senha, 10);
-  try {
-    await pool.query(
-      'INSERT INTO usuarios (nome, email, senha_hash, id_organizacao) VALUES ($1, $2, $3, $4)',
-      [nome, email, hash, id_organizacao]
-    );
-    res.json({ message: 'Usuário cadastrado!' });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Login
+// POST /auth/login
 router.post('/login', async (req, res) => {
-  const { email, senha } = req.body;
+  const { nome, senha, id_organizacao } = req.body;
+
   try {
-    const result = await pool.query('SELECT * FROM usuarios WHERE email = $1', [email]);
-    const user = result.rows[0];
-    if (user && await bcrypt.compare(senha, user.senha_hash)) {
-      res.json({ message: 'Login OK', user: { id: user.id, nome: user.nome, id_organizacao: user.id_organizacao } });
-    } else {
-      res.status(401).json({ error: 'Credenciais inválidas' });
+    const result = await pool.query(
+      'SELECT * FROM usuarios WHERE nome = $1 AND id_organizacao = $2',
+      [nome, id_organizacao]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(401).json({ error: 'Usuário não encontrado.' });
     }
+
+    const usuario = result.rows[0];
+    const senhaCorreta = await bcrypt.compare(senha, usuario.senha_hash);
+
+    if (!senhaCorreta) {
+      return res.status(401).json({ error: 'Senha inválida.' });
+    }
+
+    delete usuario.senha_hash; // remove a senha antes de enviar para o frontend
+    res.json({ user: usuario });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('[POST /auth/login] Erro:', err);
+    res.status(500).json({ error: 'Erro interno ao fazer login.' });
   }
 });
 
