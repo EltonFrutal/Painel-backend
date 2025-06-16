@@ -1,16 +1,21 @@
-// backend/routes/vendas.js
-
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 
-// [GET] - Vendas agregadas por ano
+// Função auxiliar para construir cláusula IN para nomes de empresa
+function tratarListaEmpresas(empresaStr) {
+  return empresaStr.split(',').map(e => e.trim());
+}
+
+// [GET] Vendas por ANO
 router.get('/ano', async (req, res) => {
-  const { id_organizacao, tipo, empresa } = req.query;
+  const { id_organizacao, tipo, empresas } = req.query;
   try {
     let query = `
-      SELECT EXTRACT(YEAR FROM data_emissao) AS ano,
-             SUM(valor_venda) AS total_venda
+      SELECT 
+        EXTRACT(YEAR FROM data_emissao) AS ano,
+        SUM(valor_venda) AS total_venda,
+        empresa
       FROM vendas
       WHERE id_organizacao = $1
     `;
@@ -21,12 +26,13 @@ router.get('/ano', async (req, res) => {
       query += ` AND tipo = $${params.length}`;
     }
 
-    if (empresa) {
-      params.push(empresa);
-      query += ` AND empresa = $${params.length}`;
+    if (empresas) {
+      const empresasArr = tratarListaEmpresas(empresas);
+      query += ` AND empresa = ANY($${params.length + 1})`;
+      params.push(empresasArr);
     }
 
-    query += ' GROUP BY ano ORDER BY ano';
+    query += ' GROUP BY ano, empresa ORDER BY ano, empresa';
 
     const result = await pool.query(query, params);
     res.json(result.rows);
@@ -36,13 +42,15 @@ router.get('/ano', async (req, res) => {
   }
 });
 
-// [GET] - Vendas agregadas por mês de um ano
+// [GET] Vendas por MÊS
 router.get('/mes', async (req, res) => {
-  const { id_organizacao, ano, tipo, empresa } = req.query;
+  const { id_organizacao, ano, tipo, empresas } = req.query;
   try {
     let query = `
-      SELECT EXTRACT(MONTH FROM data_emissao) AS mes,
-             SUM(valor_venda) AS total_venda
+      SELECT 
+        EXTRACT(MONTH FROM data_emissao) AS mes,
+        SUM(valor_venda) AS total_venda,
+        empresa
       FROM vendas
       WHERE id_organizacao = $1 AND EXTRACT(YEAR FROM data_emissao) = $2
     `;
@@ -53,12 +61,13 @@ router.get('/mes', async (req, res) => {
       query += ` AND tipo = $${params.length}`;
     }
 
-    if (empresa) {
-      params.push(empresa);
-      query += ` AND empresa = $${params.length}`;
+    if (empresas) {
+      const empresasArr = tratarListaEmpresas(empresas);
+      query += ` AND empresa = ANY($${params.length + 1})`;
+      params.push(empresasArr);
     }
 
-    query += ' GROUP BY mes ORDER BY mes';
+    query += ' GROUP BY mes, empresa ORDER BY mes, empresa';
 
     const result = await pool.query(query, params);
     res.json(result.rows);
@@ -68,13 +77,15 @@ router.get('/mes', async (req, res) => {
   }
 });
 
-// [GET] - Vendas por dia de um mês e ano
+// [GET] Vendas por DIA
 router.get('/dia', async (req, res) => {
-  const { id_organizacao, ano, mes, tipo, empresa } = req.query;
+  const { id_organizacao, ano, mes, tipo, empresas } = req.query;
   try {
     let query = `
-      SELECT EXTRACT(DAY FROM data_emissao) AS dia,
-             SUM(valor_venda) AS total_venda
+      SELECT 
+        EXTRACT(DAY FROM data_emissao) AS dia,
+        SUM(valor_venda) AS total_venda,
+        empresa
       FROM vendas
       WHERE id_organizacao = $1
         AND EXTRACT(YEAR FROM data_emissao) = $2
@@ -87,12 +98,13 @@ router.get('/dia', async (req, res) => {
       query += ` AND tipo = $${params.length}`;
     }
 
-    if (empresa) {
-      params.push(empresa);
-      query += ` AND empresa = $${params.length}`;
+    if (empresas) {
+      const empresasArr = tratarListaEmpresas(empresas);
+      query += ` AND empresa = ANY($${params.length + 1})`;
+      params.push(empresasArr);
     }
 
-    query += ' GROUP BY dia ORDER BY dia';
+    query += ' GROUP BY dia, empresa ORDER BY dia, empresa';
 
     const result = await pool.query(query, params);
     res.json(result.rows);

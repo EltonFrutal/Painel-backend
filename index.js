@@ -7,6 +7,7 @@ const authRoutes = require('./routes/auth');
 const vendasRoutes = require('./routes/vendas');
 const organizacaoRoutes = require('./routes/organizacao');
 const usuariosRoutes = require('./routes/usuarios');
+const empresasRoutes = require('./routes/empresas'); // ✅ NOVA ROTA
 
 const app = express();
 
@@ -15,10 +16,11 @@ app.use(cors());
 app.use(bodyParser.json());
 
 // Rotas com prefixo /api
-app.use('/api/auth', authRoutes);            // Correto para funcionar com /api/auth/login
+app.use('/api/auth', authRoutes);
 app.use('/api/vendas', vendasRoutes);
 app.use('/api/organizacao', organizacaoRoutes);
 app.use('/api/usuarios', usuariosRoutes);
+app.use('/api/empresas', empresasRoutes); // ✅ REGISTRAR AQUI
 
 // Rota simples de teste
 app.get('/teste-api', (req, res) => {
